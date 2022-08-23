@@ -177,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onUnmounted, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { LocalStorageKeys } from "@store/lskeys";
 import { Emote } from "@structures/Emote";
@@ -281,6 +281,9 @@ const onDragLeave = () => {
 };
 
 const handleFile = async (file: File) => {
+	if (imgUrl.value) {
+		URL.revokeObjectURL(imgUrl.value);
+	}
 	imgUrl.value = URL.createObjectURL(file);
 
 	mime = file.type;
@@ -289,6 +292,11 @@ const handleFile = async (file: File) => {
 		form.name = file.name.slice(0, file.name.lastIndexOf("."));
 	}
 };
+onUnmounted(() => {
+	if (imgUrl.value) {
+		URL.revokeObjectURL(imgUrl.value);
+	}
+});
 
 const imageAspectRatio = ref(1);
 const updateImageAspectRatio = () => {

@@ -158,7 +158,7 @@ const acceptableFileTypes = [
 	{ mime: "video/mp4", label: "MP4", animation: true },
 	{ mime: "video/x-flv", label: "FLV", animation: true },
 	{ mime: "video/avi,video/x-msvideo", label: "AVI", animation: true },
-	{ mime: "video/quicktime", label: "MOV", animation: true },
+	{ mime: "video/quicktime", label: "MOV", transparency: "full", animation: true },
 ] as FileType[];
 const mimeList = acceptableFileTypes.map((ft) => ft.mime).join(",");
 

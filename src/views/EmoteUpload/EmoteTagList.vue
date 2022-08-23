@@ -23,6 +23,7 @@
 				label="New Tag"
 				appearance="flat"
 				:autofocus="true"
+				@keydown.enter.prevent
 				@keyup.enter="addTag"
 				@blur="newTag = false"
 			/>

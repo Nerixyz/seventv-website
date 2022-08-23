@@ -1,264 +1,324 @@
 @import "@scss/themes.scss";
 @import "@scss/common/shape.scss";
 
-.emote-upload {
+.emote-upload-wrap {
+	position: relative;
 	display: flex;
 	width: 100%;
 	height: 100%;
+	align-items: center;
+	justify-content: center;
 
-	.heading {
-		@include themify() {
-			background-color: darken(themed("navBackgroundColor"), 2);
-			border: 1px solid themed("backgroundColor");
-		}
-		padding: 0.75em;
-	}
-
-	.content {
+	/* Main content */
+	.emote-upload {
 		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
+		gap: 3em;
 
-		border-radius: 0.4em;
 		@include themify() {
-			background-color: darken(themed("backgroundColor"), 4);
+			.side-parent > .parent,
+			.side-details > .details,
+			.side-preview > :is(.emote-preview, .chat-preview),
+			.side-add-emote > .inner {
+				background-color: darken(themed("backgroundColor"), 2);
+			}
 		}
-		height: 100%;
 
-		.overall-form {
+		h3 {
+			margin-bottom: 1em;
+		}
+
+		/* Parent Emote */
+		.side-parent {
 			display: flex;
-			flex-direction: row;
-			height: 100%;
-			margin: 1em;
-			justify-content: space-between;
-
-			@include themify() {
-				> .image-upload > span > .parent-emote {
-					background-color: darken(themed("backgroundColor"), 2);
-				}
-				> .image-upload > div {
-					background-color: darken(themed("backgroundColor"), 2);
-					> .formats-viewer {
-						background-color: transparentize(lighten(themed("backgroundColor"), 4), 0.25);
-					}
-					&[dragOver="true"] {
-						background-color: transparentize(darken(themed("accent"), 8), 0.75);
-					}
-				}
-			}
-
-			> .form-grid-item {
-				width: calc(100% / 3);
-			}
-
-			> .image-upload {
+			flex-direction: column;
+			.parent {
 				display: flex;
 				flex-direction: column;
 				justify-content: center;
 				align-items: center;
-				padding: 0.5em 1em;
-				margin-right: 1em;
-				border-radius: 0.4em;
+				flex-grow: 1;
+				padding: 2em;
+				gap: 2em;
+			}
+		}
 
-				> span {
-					display: flex;
-					align-items: center;
-					justify-content: center;
-					width: 100%;
-					flex-grow: 1;
+		/* Emote Details */
+		.side-details > .details {
+			display: flex;
+			flex-direction: column;
+			padding: 2em;
+			max-width: 30em;
+			gap: 0.75em;
+
+			@include themify() {
+				input[type="submit"] {
+					background-color: darken(themed("backgroundColor"), 4);
+
+					&:hover {
+						background-color: lighten(themed("backgroundColor"), 2);
+					}
+
+					&:focus {
+						background-color: darken(themed("backgroundColor"), 6);
+						outline: none;
+					}
+				}
+			}
+			input[type="submit"] {
+				color: currentColor;
+				font-size: 1.5em;
+				border: none;
+				padding: 0.5em 2em;
+				cursor: pointer;
+			}
+		}
+
+		/* Preview */
+		.side-preview {
+			display: flex;
+			flex-direction: column;
+
+			/* Emote */
+			.emote-preview {
+				display: flex;
+				flex-direction: column;
+				padding: 2em;
+				margin-bottom: 1em;
+
+				h5 {
+					font-weight: normal;
+					font-size: 1.5rem;
+					text-align: center;
 				}
 
-				> div {
+				.sizes {
 					display: flex;
-					flex-direction: column;
-					align-items: center;
-					justify-content: center;
-					min-width: 26em;
-					min-height: 26em;
-					border-radius: 0.3em;
-					clip-path: $shapeBevel;
-					transition: background-color 130ms ease-in-out;
+					align-items: flex-end;
+					gap: 4rem;
 
-					&[dragOver="true"] {
-						h3,
-						a,
-						label {
-							pointer-events: none;
-						}
-					}
-
-					> a.acceptable-format-list {
-						cursor: pointer;
-						user-select: none;
-						text-align: end;
-						font-size: 0.75rem;
-						> span {
-							display: block;
-							color: gray;
-						}
-					}
-
-					> .formats-viewer {
-						position: absolute;
-						width: 16em;
+					.size {
 						display: flex;
 						flex-direction: column;
-						border-radius: 0.4em;
-						padding: 0.5em;
-						backdrop-filter: blur(4px);
+						gap: 0.5em;
+						align-items: center;
+						font-size: 0.75em;
 
-						.format {
-							display: flex;
-							flex-direction: row;
-							justify-content: space-evenly;
+						img.s32 {
+							height: 32px;
+						}
 
-							&[categories] {
-								margin-bottom: 0.4em;
-								font-size: 0.85em;
-							}
+						img.s64 {
+							height: 64px;
+						}
 
-							[part] {
-								margin-bottom: 0.25em;
-							}
-							[part="label"] {
-								width: 33.3333%;
-							}
-							[part="animation"] {
-								text-align: center;
-								width: 33.3333%;
-							}
-							[part="transparency"] {
-								text-align: center;
-								width: 33.3333%;
-							}
-							[part="close-btn"] {
-								cursor: pointer;
-								margin-left: 0.5em;
-							}
+						img.s96 {
+							height: 96px;
+						}
+
+						img.s128 {
+							height: 128px;
 						}
 					}
 				}
+			}
 
-				.parent-emote {
-					padding: 1em;
-					border-radius: 0.3em;
-					display: flex;
-					justify-content: space-between;
-					align-items: center;
-					box-shadow: 0 0 0.25em rgb(100, 70, 180);
+			/* Chat */
+			.chat-preview {
+				display: flex;
+				flex-direction: column;
+				flex-grow: 1;
+				padding: 2em;
+				justify-content: center;
 
-					> .as-child-notice {
-						text-align: center;
-						margin-left: 1em;
+				.line {
+					display: inline-flex;
+					line-height: 1.3em;
+					padding: 0.2em 0;
+					.user {
+						margin-right: 2px;
+					}
+					.emote {
+						max-height: 28px;
+						width: auto;
+						margin: -0.25em 0;
+						position: relative;
+						vertical-align: middle;
 					}
 				}
 			}
+		}
 
-			label[for="file-upload"] {
-				cursor: pointer;
-				display: block;
-				margin-top: 1em;
-				width: fit-content;
-				height: fit-content;
-				user-select: none;
+		/* Emote Input */
+		.side-add-emote {
+			display: flex;
+			flex-direction: column;
 
-				img {
-					pointer-events: none;
-					min-width: 8rem;
-					max-width: 24rem;
-					height: 8rem;
-					border: 4px dashed currentColor;
-					border-radius: 0.25em;
-				}
-			}
-
-			> .inputs {
+			> .inner {
+				padding: 2em;
+				flex-grow: 1;
 				display: flex;
-				flex-direction: column;
-				margin-top: 1em;
-				padding: 0.5em 1em;
-				border-radius: 0.4em;
+				gap: 2em;
 
-				.text-input {
+				> .image {
 					display: flex;
 					flex-direction: column;
-					max-width: 16em;
-				}
-
-				> form {
-					.form-item {
-						margin-top: 1em;
-						margin-bottom: 1em;
-					}
-
-					> h4 {
-						margin-bottom: 0.6em;
-						opacity: 0.75;
-					}
-				}
-			}
-
-			@media screen and (max-width: 800px) {
-				flex-direction: column;
-				align-items: center;
-				> .image-upload {
+					gap: 1em;
 					align-items: center;
-				}
-				> .inputs {
-					align-items: center;
-				}
-			}
-		}
+					justify-content: center;
 
-		> .upload-error {
-			font-size: 1.5em;
-			text-align: center;
-			color: red;
-		}
-		> .actions {
-			display: flex;
-			width: 100%;
-			height: 4em;
-			@include themify() {
-				background-color: themed("backgroundColor");
-			}
-			overflow: hidden;
-			> .progress {
-				display: flex;
-				@include themify() {
-					background-color: lighten(themed("accent"), 4);
-					color: themed("color");
-				}
-
-				> span {
-					display: flex;
-					align-items: center;
-					font-size: 1.5em;
-					width: 100%;
-
-					> .submit-button {
-						display: flex;
-						align-items: center;
-						justify-content: center;
+					.file-upload-box {
 						cursor: pointer;
-						height: 100%;
-						width: 100%;
+						display: block;
+						width: 8em;
+						height: 8em;
+						user-select: none;
 
-						&.missing-file {
-							pointer-events: none;
-							filter: grayscale(100%);
+						@media (prefers-reduced-motion: no-preference) {
+							> svg > rect {
+								animation: dash linear 10s infinite;
+							}
 						}
 
-						@include themify() {
-							background-color: themed("primary");
-							&:hover {
-								background-color: lighten(themed("primary"), 4);
+						@keyframes dash {
+							from {
+								stroke-dashoffset: 0;
+							}
+							to {
+								stroke-dashoffset: 100%;
 							}
 						}
 					}
-					> .progress-counter {
-						margin-right: 0.5em;
+
+					.accepted-formats {
+						cursor: pointer;
 					}
+				}
+
+				> .matrix {
+					display: grid;
+					grid-template-columns: repeat(3, auto);
+					grid-column-gap: 1em;
+					grid-row-gap: 0.25em;
+					padding: 1em;
+
+					transition: 175ms ease-out;
+					transition-property: transform, opacity;
+					transform-origin: left;
+
+					@media (prefers-reduced-motion: reduce) {
+						transition-duration: 0ms;
+					}
+
+					@include themify() {
+						background-color: darken(themed("backgroundColor"), 4);
+					}
+
+					.header {
+						font-weight: bold;
+						padding-bottom: 0.5em;
+					}
+
+					.icon {
+						justify-self: center;
+					}
+				}
+
+				> .matrix-leave-from,
+				> .matrix-enter-to {
+					transform: scale(1);
+					opacity: 1;
+				}
+				> .matrix-leave-to,
+				> .matrix-enter-from {
+					transform: scale(0.2);
+					opacity: 0;
+				}
+			}
+		}
+	}
+
+	/* Overlays */
+
+	.dropper,
+	.loader {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 100;
+
+		backdrop-filter: blur(10px);
+		opacity: 1;
+		transition: 150ms linear;
+		transition-property: backdrop-filter, opacity;
+
+		display: flex;
+		flex-direction: column;
+		gap: 2em;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.dropper {
+		> .icon {
+			height: 4em;
+		}
+	}
+
+	.drop-leave-to,
+	.drop-enter-from,
+	.load-leave-to,
+	.load-enter-from {
+		backdrop-filter: blur(0);
+		opacity: 0;
+	}
+
+	.loader {
+		> * {
+			z-index: 101;
+		}
+
+		> .progress {
+			position: absolute;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			z-index: 100;
+			background-color: rgba(0, 0, 0, 25%);
+			transform: scaleX(var(--progress, 0));
+			transform-origin: left;
+			transition: transform 200ms ease-out;
+		}
+
+		> .error-display {
+			display: flex;
+			flex-direction: column;
+			gap: 1em;
+			align-items: center;
+
+			button {
+				@include themify() {
+					background-color: darken(themed("warning"), 4);
+
+					&:hover {
+						background-color: lighten(themed("warning"), 2);
+					}
+
+					&:focus {
+						background-color: darken(themed("warning"), 6);
+					}
+				}
+				padding: 0.5em 2em;
+				border: none;
+				color: currentColor;
+				box-shadow: #0005 0 2px 5px;
+				cursor: pointer;
+				font-size: 1.1em;
+
+				&:focus {
+					outline: none;
 				}
 			}
 		}

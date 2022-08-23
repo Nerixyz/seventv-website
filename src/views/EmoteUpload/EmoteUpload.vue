@@ -1,73 +1,165 @@
 <template>
-	<div class="emote-upload">
-		<!-- Heading -->
-		<div class="heading">
-			<h2>{{ t(txt.submitEmote) }}</h2>
-		</div>
-
-		<!-- Content -->
-		<div class="content">
-			<div class="overall-form">
-				<!-- Information Inputs -->
-				<div class="inputs form-grid-item">
-					<h3>{{ t(txt.emoteDetails) }}</h3>
-
-					<form>
-						<TextInput v-model="form.name" class="form-item" :label="t(txt.inputEmoteName)" />
-						<TextInput
-							v-if="parentEmote"
-							v-model="form.version_description"
-							:label="t('emote.upload.version_description')"
-						/>
-
-						<Checkbox :checked="form.zero_width" label="Zero-Width" class="form-item" />
-						<Checkbox :checked="form.private" label="Private" class="form-item" />
-
-						<h4>{{ t("emote.tags") }}</h4>
-						<EmoteTagList :editable="true" :limit="6" @update="(tags) => (form.tags = tags)" />
-					</form>
+	<div
+		class="emote-upload-wrap"
+		@drop.prevent="onDropFile"
+		@dragover.prevent
+		@dragenter="onDragEnter"
+		@dragleave="onDragLeave"
+	>
+		<!-- Drop Overlay -->
+		<transition name="drop">
+			<div v-if="dragOver" class="dropper">
+				<h1>Drop here</h1>
+				<font-awesome-icon class="icon" :icon="['fab', 'plus']" color="white" />
+			</div>
+		</transition>
+		<!-- Load Overlay -->
+		<transition name="load">
+			<div v-if="uploadError || uploadProgress" class="loader">
+				<h1>{{ uploadError ? "Error" : "Uploading..." }}</h1>
+				<div v-if="uploadError" class="error-display">
+					<h3>{{ uploadError }}</h3>
+					<button @click="clearError">Ok</button>
 				</div>
+				<div v-else class="progress" :style="{ '--progress': uploadProgress }"></div>
+			</div>
+		</transition>
 
-				<!-- Image Upload -->
-				<div class="image-upload form-grid-item">
-					<div
-						:dragOver="dragOver"
-						@drop.prevent="onDropFile"
-						@dragover.prevent
-						@dragenter="dragOver = true"
-						@dragleave="dragOver = false"
-					>
-						<h3>{{ t("emote.upload.image_upload") }}</h3>
-						<a class="acceptable-format-list" @click="formatsViewerOpen = !formatsViewerOpen">
-							{{ t("emote.upload.accepted_formats") }}
-							<font-awesome-icon v-if="formatsViewerOpen" :icon="['far', 'close']" />
-						</a>
+		<div class="emote-upload">
+			<!-- Parent Emote -->
+			<div v-if="parentEmote" class="side-parent">
+				<h3>Parent Emote</h3>
+				<div class="parent">
+					<img
+						alt="parent"
+						:src="
+							Emote.GetImage(Emote.GetCurrentVersion(parentEmote)?.images ?? [], ImageFormat.WEBP, '2x')
+								?.url
+						"
+					/>
+					<span class="name">{{ parentEmote.name }}</span>
+				</div>
+			</div>
+			<!-- Emote Details -->
+			<div class="side-details">
+				<h3>Emote details</h3>
+				<form class="details" @submit.prevent="upload">
+					<TextInput v-model="form.name" class="form-item" :label="t(txt.inputEmoteName)" />
+					<TextInput
+						v-if="parentEmote"
+						v-model="form.version_description"
+						:label="t('emote.upload.version_description')"
+					/>
 
-						<!-- Formats Viewer -->
-						<div v-if="formatsViewerOpen" ref="formatsViewer" class="formats-viewer">
-							<div class="format" categories>
-								<div part="label">{{ t("emote.upload.filetype") }}</div>
-								<div part="animation">{{ t("emote.upload.animation") }}</div>
-								<div part="transparency">{{ t("emote.upload.transparency") }}</div>
+					<Checkbox :checked="form.zero_width" label="Zero-Width" class="form-item" />
+					<Checkbox :checked="form.private" label="Private" class="form-item" />
 
-								<span part="close-btn" @click="formatsViewerOpen = false">
-									<font-awesome-icon :icon="['far', 'close']" />
-								</span>
-							</div>
-							<div v-for="f of acceptableFileTypes" :key="f.label" class="format" :format="f.mime">
-								<div part="label">{{ f.label }}</div>
-								<div part="animation">
+					<h4>{{ t("emote.tags") }}</h4>
+					<EmoteTagList :editable="true" :limit="6" @update="(tags) => (form.tags = tags)" />
+
+					<h4>Before you submit</h4>
+					<p class="before-submit">
+						Some long text xd I love 7tv maoE! Maybe something regarding private or unlisted or idk what to
+						type here anyways this should be enough to trigger a linebreak and child thing !! Is the parent
+						emote shown idk
+						<i18n-t v-if="parentEmote" keypath="emote.upload.as_child" tag="p">
+							<span style="font-weight: 600">{{ parentEmote.name }}</span>
+						</i18n-t>
+					</p>
+					<input type="submit" :value="t('common.submit')" />
+				</form>
+			</div>
+			<!-- Preview -->
+			<div v-if="imgUrl" class="side-preview">
+				<h3>Emote Preview</h3>
+				<!-- Emote Preview -->
+				<div class="emote-preview">
+					<h5>{{ form.name }}</h5>
+					<div class="sizes">
+						<div class="size">
+							<img class="s32" alt="emote" :src="imgUrl" />
+							<span>{{ (imageAspectRatio * 32).toFixed(0) }}x32</span>
+						</div>
+						<div class="size">
+							<img class="s64" alt="emote" :src="imgUrl" />
+							<span>{{ (imageAspectRatio * 64).toFixed(0) }}x64</span>
+						</div>
+						<div class="size">
+							<img class="s96" alt="emote" :src="imgUrl" />
+							<span>{{ (imageAspectRatio * 96).toFixed(0) }}x96</span>
+						</div>
+						<div class="size">
+							<img
+								ref="aspectRef"
+								alt="emote"
+								:src="imgUrl"
+								class="s128"
+								@load="updateImageAspectRatio"
+							/>
+							<span>{{ (imageAspectRatio * 128).toFixed(0) }}x128</span>
+						</div>
+					</div>
+				</div>
+				<h3>Chat Preview</h3>
+				<!-- Chat Preview -->
+				<div class="chat-preview">
+					<div class="line">
+						<span class="user" :style="{ color: `#${userColor.toString(16).padStart(6, '0')}` }"
+							>{{ userName }}:</span
+						>
+						Look at my new emote: <img class="emote" :alt="form.name" :src="imgUrl" />
+					</div>
+					<div class="line">
+						<span class="user" :style="{ color: `#${userColor.toString(16).padStart(6, '0')}` }"
+							>{{ userName }}:</span
+						>
+						<img class="emote" :alt="form.name" :src="imgUrl" />
+					</div>
+				</div>
+			</div>
+			<!-- Emote Input -->
+			<div v-else class="side-add-emote">
+				<h3>{{ t("emote.upload.image_upload") }}</h3>
+				<div class="inner">
+					<div class="image">
+						<h5>Click or drag an image here.</h5>
+						<input id="file-upload" hidden type="file" :accept="mimeList" @change="onFileInputChange" />
+						<!-- Dummy Box -->
+						<label for="file-upload" class="file-upload-box">
+							<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+								<rect
+									width="20"
+									height="20"
+									stroke="currentColor"
+									stroke-dasharray="1"
+									fill="transparent"
+								></rect>
+							</svg>
+						</label>
+						<a class="accepted-formats" @click="formatsViewerOpen = !formatsViewerOpen">{{
+							t("emote.upload.accepted_formats")
+						}}</a>
+					</div>
+					<!-- Format Matrix -->
+					<transition name="matrix">
+						<div v-if="formatsViewerOpen" class="matrix">
+							<div class="header">{{ t("emote.upload.filetype") }}</div>
+							<div class="header">{{ t("emote.upload.animation") }}</div>
+							<div class="header">{{ t("emote.upload.transparency") }}</div>
+							<template v-for="f of acceptableFileTypes" :key="f.label">
+								<div>{{ f.label }}</div>
+								<div class="icon">
 									<font-awesome-icon v-if="f.animation" :icon="['far', 'check']" color="lime" />
 									<font-awesome-icon v-else :icon="['far', 'times']" color="red" />
 								</div>
-								<div part="transparency">
+								<div class="icon">
 									<font-awesome-icon
-										v-if="f.transparency == 'full'"
+										v-if="f.transparency === 'full'"
 										:icon="['far', 'check']"
 										color="lime"
 									/>
 									<Tooltip
-										v-else-if="f.transparency == 'half'"
+										v-else-if="f.transparency === 'half'"
 										:text="t('emote.upload.half_transparency_tooltip')"
 										position="top-end"
 									>
@@ -75,50 +167,9 @@
 									</Tooltip>
 									<font-awesome-icon v-else :icon="['far', 'times']" color="red" />
 								</div>
-							</div>
+							</template>
 						</div>
-						<input id="file-upload" hidden type="file" :accept="mimeList" @change="onFileInputChange" />
-						<label for="file-upload">
-							<img ref="previewImage" />
-						</label>
-					</div>
-
-					<span>
-						<div v-if="parentEmote" class="parent-emote">
-							<img
-								:src="
-									Emote.GetImage(
-										Emote.GetCurrentVersion(parentEmote)?.images ?? [],
-										ImageFormat.WEBP,
-										'2x',
-									)?.url
-								"
-							/>
-							<div class="as-child-notice">
-								<i18n-t keypath="emote.upload.as_child" tag="p">
-									<span style="font-weight: 600">{{ parentEmote.name }}</span>
-								</i18n-t>
-							</div>
-						</div>
-					</span>
-				</div>
-			</div>
-
-			<!-- Upload Button -->
-			<span v-if="uploadError" class="upload-error">Error: {{ uploadError }}</span>
-			<div class="actions">
-				<div class="progress" :style="{ width: !uploadProgress ? 'inherit' : `${uploadProgress.toFixed(5)}%` }">
-					<span :style="{ justifyContent: !uploadProgress ? 'center' : 'flex-end' }">
-						<span v-if="uploadProgress > 0" class="progress-counter">{{ uploadProgress.toFixed(1) }}%</span>
-						<span
-							v-else
-							class="submit-button"
-							:class="{ 'missing-file': !buf?.byteLength }"
-							@click="upload"
-						>
-							{{ t("common.submit").toUpperCase() }}
-						</span>
-					</span>
+					</transition>
 				</div>
 			</div>
 		</div>
@@ -126,7 +177,7 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { LocalStorageKeys } from "@store/lskeys";
 import { Emote } from "@structures/Emote";
@@ -139,6 +190,7 @@ import TextInput from "@components/form/TextInput.vue";
 import Tooltip from "@components/utility/Tooltip.vue";
 import Checkbox from "@/components/form/Checkbox.vue";
 import EmoteTagList from "./EmoteTagList.vue";
+import { useActorStore } from "@store/actor";
 
 const { t } = useI18n();
 
@@ -180,6 +232,11 @@ onMounted(() => {
 	onClickOutside(formatsViewer, () => (formatsViewerOpen.value = false));
 });
 
+// User info for chat preview
+const actor = useActorStore();
+const userColor = computed(() => actor.user?.tag_color ?? 0);
+const userName = computed(() => actor.user?.username ?? "nani");
+
 // Form
 const form = reactive({
 	name: "",
@@ -195,34 +252,51 @@ const form = reactive({
 });
 
 // Input File
-const previewImage = ref<HTMLImageElement | null>(null);
+const imgUrl = ref<string | null>(null);
+const aspectRef = ref<HTMLImageElement | null>(null);
 const buf = ref<ArrayBuffer | null>(null);
 let mime = "";
+
 const onFileInputChange = (event: Event) => {
 	const target = event.target as HTMLInputElement;
 	const file = target.files?.[0] as File;
 	handleFile(file);
 };
-const dragOver = ref(false);
+const dragOverRc = ref(0);
+const dragOver = computed(() => !!dragOverRc.value);
 const onDropFile = (event: DragEvent) => {
-	dragOver.value = false;
+	dragOverRc.value = 0;
+	imageAspectRatio.value = 1;
 	const file = event.dataTransfer?.files[0] as File;
 	if (!file) {
 		throw new Error("No file provided during drop event");
 	}
 	handleFile(file);
 };
+const onDragEnter = () => {
+	dragOverRc.value++;
+};
+const onDragLeave = () => {
+	dragOverRc.value--;
+};
+
 const handleFile = async (file: File) => {
-	const url = URL.createObjectURL(file);
-	if (previewImage.value) {
-		previewImage.value.src = url;
-		previewImage.value.onload = () => URL.revokeObjectURL(url);
-	}
+	imgUrl.value = URL.createObjectURL(file);
 
 	mime = file.type;
 	buf.value = await file.arrayBuffer();
 	if (!form.name) {
 		form.name = file.name.slice(0, file.name.lastIndexOf("."));
+	}
+};
+
+const imageAspectRatio = ref(1);
+const updateImageAspectRatio = () => {
+	if (aspectRef.value === null) {
+		imageAspectRatio.value = 1;
+	} else {
+		const bb = aspectRef.value.getBoundingClientRect();
+		imageAspectRatio.value = bb.width / (bb.height || 1);
 	}
 };
 
@@ -252,7 +326,7 @@ const upload = () => {
 	req.setRequestHeader("Content-Type", mime);
 	req.setRequestHeader("Content-Length", buf.value.byteLength.toString(10));
 	req.setRequestHeader("Authorization", `Bearer ${localStorage.getItem(LocalStorageKeys.TOKEN)}`);
-	req.upload.onprogress = (progress) => (uploadProgress.value = (progress.loaded / progress.total) * 100);
+	req.upload.onprogress = (progress) => (uploadProgress.value = progress.loaded / progress.total);
 	req.onload = () => {
 		uploadProgress.value = 0;
 		if (req.status !== 201) {
@@ -267,6 +341,11 @@ const upload = () => {
 	};
 
 	req.send(buf.value);
+};
+
+const clearError = () => {
+	uploadProgress.value = 0;
+	uploadError.value = "";
 };
 
 //
@@ -294,6 +373,6 @@ interface FileType {
 }
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 @import "@scss/emote-upload/emote-upload.scss";
 </style>

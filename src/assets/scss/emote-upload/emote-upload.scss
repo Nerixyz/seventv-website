@@ -140,9 +140,14 @@
 					.emote {
 						max-height: 28px;
 						width: auto;
-						margin: -0.25em 0;
+						margin: -0.25em 0.2em;
 						position: relative;
 						vertical-align: middle;
+
+						&.zero-width {
+							position: absolute;
+							width: 0;
+						}
 					}
 				}
 			}

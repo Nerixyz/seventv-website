@@ -51,8 +51,8 @@
 						:label="t('emote.upload.version_description')"
 					/>
 
-					<Checkbox :checked="form.zero_width" label="Zero-Width" class="form-item" />
-					<Checkbox :checked="form.private" label="Private" class="form-item" />
+					<Checkbox v-model:checked="form.zero_width" label="Zero-Width" class="form-item" />
+					<Checkbox v-model:checked="form.private" label="Private" class="form-item" />
 
 					<h4>{{ t("emote.tags") }}</h4>
 					<EmoteTagList :editable="true" :limit="6" @update="(tags) => (form.tags = tags)" />
@@ -107,13 +107,15 @@
 						<span class="user" :style="{ color: `#${userColor.toString(16).padStart(6, '0')}` }"
 							>{{ userName }}:</span
 						>
-						Look at my new emote: <img class="emote" :alt="form.name" :src="imgUrl" />
+						Look at my new emote:
+						<img v-if="form.zero_width" class="emote" alt="Stare" src="@img/stare.webp" />
+						<img :class="['emote', { 'zero-width': form.zero_width }]" :alt="form.name" :src="imgUrl" />
 					</div>
 					<div class="line">
 						<span class="user" :style="{ color: `#${userColor.toString(16).padStart(6, '0')}` }"
 							>{{ userName }}:</span
 						>
-						<img class="emote" :alt="form.name" :src="imgUrl" />
+						<img :class="['emote', { 'zero-width': form.zero_width }]" :alt="form.name" :src="imgUrl" />
 					</div>
 				</div>
 			</div>
